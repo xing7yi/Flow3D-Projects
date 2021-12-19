@@ -3,11 +3,20 @@
  &xput
     remark='!! Remarks beginning with "!! " are automatically added and removed by FLOW-3D.',
     remark='!! Do not begin any user added remarks with with "!! ". They will be removed',
-    twfin=0.40, remark='finish time',
+    twfin=0.60, remark='finish time',
     itb=1, remark='free surface or sharp interface',
 
     remark='Solution Control',
+    delt=1e-9, remark='initial time step',
+    
     itwfin=10000000, remark='number of times steps (cycles) to end calculation',
+    imphtc=0, remark='implicit evaluation of temperature terms',
+    ifvof=6, remark='split Lagrangian method for F advection options',
+    fclean=0.05, remark='fluid fraction cleanup coefficient for fluid #1',
+    ifdynconv=1, remark='pressure iteration convergence criterion flag',
+    omega=1.0, remark='the GMRES pressure solver',
+
+    remark='Physical Model',
     
     remark='Heat Transfer',
     ifenrg=2, remark='solve energy transport equation (1st order)',
@@ -19,14 +28,7 @@
     
     remark='Surface Tension',
     ifsft=1, remark='activate surface tension model',
-    imphtc=0, remark='implicit evaluation of temperature terms',
-    ifvof=6, remark='split Lagrangian method for F advection options',
-    fclean=0.05, remark='fluid fraction cleanup coefficient for fluid #1',
-    ifdynconv=1, remark='pressure iteration convergence criterion flag',
-    omega=1.0, remark='the GMRES pressure solver',
-    
-    remark='Physical Model',
-    
+
     remark='Bubble and Phase Change',
     iphchg=1, remark='phase change and bubble model flag',
     
@@ -41,7 +43,6 @@
     ifsld=1,
     ishrnk=0,
     
-    delt=1e-9,
     hflv1=1.0e+05, remark='Heat Transfer to Void Type 1',
  /
 
@@ -52,33 +53,37 @@
     units='cgs',
     tunits='k',
     gamma=1.67, remark='ratio of specific heat',
-    mu1=0.06, remark='viscosity',
-    
+    tstar=1727.15, remark='reference temperature',
+
     remark='Fluid #1',
-    fluid1='Iron', remark='material name',
-    cv1=4.6e+06, remark='specific heat',
-    tstar=1670, remark='reference temperature',
-    tl1=1727, remark='liquidus temperature',
-    ts1=1670, remark='solidus temperature',
-    clht1=2.45e+09, remark='latent heat fusion',
-    cvs1=4.6e+06, remark='specific heat of solidified fluid',
-    thcs1=2.2e+06, remark='thermal conductivity of solidified fluid',
-    rhofs=7.5, remark='density of solidified fluid',
+    fluid1='Stainless Steel 304', remark='material name',
+    rhof=8.02, remark='density',
+    cv1=4.8e+06, remark='specific heat',
+    thc1=1.48e+06, remark='thermal conductivity',
+    mu1=0.08, remark='viscosity',
+    tl1=1727.15, remark='liquidus temperature',
+    ts1=1633.15, remark='solidus temperature',
+    clht1=2.61e+09, remark='latent heat fusion',
+    rhofs=8.02, remark='density of solidified fluid',
+    cvs1=4.8e+06, remark='specific heat of solidified fluid',
+    thcs1=1.48e+06, remark='thermal conductivity of solidified fluid',
     
     remark='Phase Change',
-    pv1=1.013e+6, remark='saturation pressure',
-    tv1=2843, remark='saturation temperature',
+    pv1=1.013e+06, remark='saturation pressure',
+    tv1=3000, remark='saturation temperature',
     clhv1=6.34e+10, remark='latent heat of vaporization',
     rsize=0.05, remark='accommodation coefficient',
-    cvvap=4.307e+08, remark='vapor specific heat',
+    cvvap=4.6e+05, remark='vapor specific heat',
 
     remark='Surface Tension',
-    sigma=1000, remark='surface tension coefficient',
-    thc1=2.2e+06, remark='thermal conductivity',
+    sigma=1200, remark='surface tension coefficient',
     
     remark='Tabular Flag',
-    isigma=1,
+    isigma=0,
     irhof=1,
+    ithc1=1,
+    icv1=1,
+    imu1=1,
  /
 
  &scalar
@@ -137,15 +142,15 @@
 
     remark='!! Boundary condition Z Max',
     ibct(6)=5,
-    pbct(1, 6)=1.0e+06,
+    pbct(1, 6)=1.013e+06,
     fbct(1, 6)=0,
-    tbct(1, 6)=293,
+    tbct(1, 6)=298,
     ihtbct(6)=0, 
  /
 
  &mesh
     MeshName='Mesh block 1',
-    size=0.015, remark='Size of Cells',
+    size=0.025, remark='Size of Cells',
 
     px(1)=0,
     px(2)=2.0,
@@ -199,12 +204,12 @@
     tvrd(1, 1)=298, remark= 'Temperature',
 
     remark='!! Region Pointer common parameters',
-    pvoid=1.0e+06, remark='Default Void Initial Vapor Pressure',
+    pvoid=1.013e+06, remark='Default Void Initial Vapor Pressure',
     
     remark='Global',
-    presi=1.0e+06, remark='Uniform Pressure',
+    presi=1.013e+06, remark='Uniform Pressure',
     iflinittyp=0, remark='Fluid Initialization',
-    tempi=293, remark='Uniform Initial Temperature',
+    tempi=298, remark='Uniform Initial Temperature',
  /
 
  &bf
@@ -229,7 +234,7 @@
  /
 
 
- &HEADER
+ &header
     project='dissimilar-metal',
     version='double',
     nprocs=0,
@@ -243,11 +248,28 @@
     remark='!! Fluid Particle Class',
     np_liquid=1,
     ipliquid_nmax=1000000,
-    ipliquid_species=1,
+    ipliquid_species=5,
 
     remark='!! Particle Species 1',
     pliquid_species_title(1)='fluid droplet particles: species 1',
-    pliquid_species_diameter(1)=0.01,
+    pliquid_species_diameter(1)=0.004,
+
+    remark='!! Particle Species 2',
+    pliquid_species_title(2)='fluid droplet particles: species 2',
+    pliquid_species_diameter(2)=0.006,
+
+    remark='!! Particle Species 3',
+    pliquid_species_title(3)='fluid droplet particles: species 3',
+    pliquid_species_diameter(3)=0.008,
+
+    remark='!! Particle Species 4',
+    pliquid_species_title(4)='fluid droplet particles: species 4',
+    pliquid_species_diameter(4)=0.01,
+
+    remark='!! Particle Species 5',
+    pliquid_species_title(5)='fluid droplet particles: species 5',
+    pliquid_species_diameter(5)=0.012,    
+
 
     remark='!! Particle Blocks',
     npxyz=0,
@@ -256,8 +278,8 @@
     ippkt=2, remark='number of particle sources',
 
     remark='!! Particle Source 1',
-    xppl(1)=0.16,
-    xppr(1)=0.24,
+    xppl(1)=0.36,
+    xppr(1)=0.44,
     yppf(1)=-0.16,
     yppbk(1)=-0.08,
     zppb(1)=0.43,
@@ -265,16 +287,20 @@
     vpp(1)=129.41,
     wpp(1)=-482.97,
     ratet(1, 1)=0,
-    ratet(2, 1)=5.0e+05,
-    ratet(3, 1)=5.0e+05,
+    ratet(2, 1)=1.4e+05,
+    ratet(3, 1)=1.4e+05,
     ratet(4, 1)=0,
     isrc_class(1)=13,
     src_temperature(1)=298,
-    src_species(1, 1)=1,
+    src_species(1, 1)=0.005362,
+    src_species(2, 1)=0.0842,
+    src_species(3, 1)=0.3291,
+    src_species(4, 1)=0.383,
+    src_species(5, 1)=0.1952,        
 
     remark='!! Particle Source 2',
-    xppl(2)=0.16,
-    xppr(2)=0.24,
+    xppl(2)=0.36,
+    xppr(2)=0.44,
     yppf(2)=0.08,
     yppbk(2)=0.16,
     zppb(2)=0.43,
@@ -282,18 +308,22 @@
     vpp(2)=-129.41,
     wpp(2)=-482.97,
     ratet(1, 2)=0,
-    ratet(2, 2)=5.0e+05,
-    ratet(3, 2)=5.0e+05,
+    ratet(2, 2)=1.4e+05,
+    ratet(3, 2)=1.4e+05,
     ratet(4, 2)=0,
     isrc_class(2)=13,
-    src_temperature(1)=298,
-    src_species(1, 2)=1,
+    src_temperature(2)=298,
+    src_species(1, 2)=0.005362,
+    src_species(2, 2)=0.0842,
+    src_species(3, 2)=0.3291,
+    src_species(4, 2)=0.383,
+    src_species(5, 2)=0.1952,  
 
     remark='!! Probe Particles',
     tms(1)=0.0,
     tms(2)=0.0001,
-    tms(3)=0.8,
-    tms(4)=0.8001,
+    tms(3)=0.4000,
+    tms(4)=0.4001,
  / 
 
  &weld
@@ -307,46 +337,36 @@
     remark='time table',
     timlbm(1)=0.0,
     timlbm(2)=0.0001,
-    timlbm(3)=0.8000,
-    timlbm(4)=0.8001,
+    timlbm(3)=0.4000,
+    timlbm(4)=0.4001,
     
     remark='velocity',
     utlbm(1,1)=0.0,
-    utlbm(2,1)=5.0,
-    utlbm(3,1)=5.0,
+    utlbm(2,1)=3.3,
+    utlbm(3,1)=3.3,
     utlbm(4,1)=0.0,
 
     remark='position',
-    xb0lbm(1)=0.2, yb0lbm(1)=0.0, zb0lbm(1)=10.0,    
+    xb0lbm(1)=0.4, yb0lbm(1)=0.0, zb0lbm(1)=10.0,    
     remark='direction',
     rxlbm(1)=0.0, rylbm(1)=0.0, rzlbm(1)=-1.0,
 
     remark='size',
     dlflbm(1)=10.0,
-    r0lbm(1)=0.1,
-    rflbm(1)=0.1,
-    rblbm(1)=0.025,
+    r0lbm(1)=0.4,
+    rflbm(1)=0.2,
+    rblbm(1)=0.132,
 
     remark='if both hflbm and powlbm are specified, powlbm will be used preferentially'
-    remark='laser beam heat flux qf',
-    hflbm(1,1)=1.0186e13,
-    hflbm(2,1)=1.0186e13,
-    hflbm(3,1)=0,
-    hflbm(4,1)=0,
-    
     remark='laser beam power',
-    powlbm(1,1)=2.0e+10, remark= 'power',
-    powlbm(2,1)=2.0e+10, remark= 'power',
-    powlbm(3,1)=0, remark= 'power',
+    powlbm(1,1)=0, remark= 'power',
+    powlbm(2,1)=0.8e+10, remark= 'power',
+    powlbm(3,1)=0.8e+10, remark= 'power',
     powlbm(4,1)=0, remark= 'power',
-    
+
     remark='recoil pressure',
     avprslbm=1000.0, remark='Evaporation pressure Pscoefficient A',
     bvprslbm=5.0, remark='Evaporation pressure Pscoefficient B',
-    vprmag=0.2, remark='Evaluation of dynamic pressure rising gas',
-    rkntpress=0.02, remark='Distance from the focal point where Dynamic pressure is applied',
-    ivpropt=1, remark='Dynamic pressure scope option',
-    
     
     remark='shield gas option',
     ikntpress=1, remark='Shield gas region output',
@@ -364,29 +384,111 @@
 
     remark='heat flux output',
     ilbplt=6,
+
+
+ /
+
     
     remark='dissimilar metal',
     iscfluid=7,
-    rhosc2=8.93,
-    musc2=0.0437,
-    thcsc2=4.0e7,
-    cvsc2=3.85e6,
-    tlsc2=1357.7,
-    tssc2=1357.3,
-    clhtsc2=2.087e9,
+    rhosc2=2.67, remark='density',
+    musc2=0.0115, remark='viscosity',
+    thcsc2=1.7e+07, remark='thermal conductivity',
+    cvsc2=9.0e+06, remark='specific heat',
+    tlsc2=872.15, remark='liquidus temperature',
+    tssc2=847.05, remark='solidus temperature',
+    clhtsc2=3.97e+09, remark='latent heat of fusion',
+    sigmasc2=871, remark='surface tension coefficient',
+
     iscparticle=1,
     iscparticle=2,
- /
+    remark='laser beam heat flux qf',
+    hflbm(1,1)=0,
+    hflbm(2,1)=1.0186e13,
+    hflbm(3,1)=1.0186e13,
+    hflbm(4,1)=0,
 
+    remark='laser beam power',
+    powlbm(1,1)=0, remark= 'power',
+    powlbm(2,1)=2.0e+10, remark= 'power',
+    powlbm(3,1)=2.0e+10, remark= 'power',
+    powlbm(4,1)=0, remark= 'power',
+
+    remark='multiple reflection',
+    ereflct=0.25, remark='Fresnel reflection for absorption rate',
+    cbmengpt=0.25, remark='Temperature dependent particle-absorption rate',
+    irefopt=3, remark='Multiple reflection option',
+    qreflim=0.1, remark='Critical energy fraction for the end of reflection',
+
+    vprmag=0.2, remark='Evaluation of dynamic pressure rising gas',
+    rkntpress=0.02, remark='Distance from the focal point where Dynamic pressure is applied',
+    ivpropt=1, remark='Dynamic pressure scope option',
+    tdtmax(1)=5e-3, remark='maximum time step',
 #start tables:
 #fluid1:
-#sigma
-2500	1000
-2843	200
-#end sigma
+#mu1t
+1727.15	0.08
+1773.15	0.07
+#end mu1t
 #rhof
-1670	7.5
-1727	7
+298.15	8.02
+373.15	8
+473.15	7.95
+573.15	7.903
+673.15	7.855
+773.15	7.805
+873.15	7.751
+973.15	7.698
+1073.15	7.645
+1173.15	7.59
+1273.15	7.532
+1373.15	7.481
+1473.15	7.431
+1573.15	7.381
+1633.15	7.351
+1727.15	6.9
+1773.15	6.86
+1873.15	6.78
 #end rhof
+#thc1
+298.15	1.48e+6
+373.15	1.58e+6
+473.15	1.77e+6
+573.15	1.88e+6
+673.15	2.07e+6
+773.15	2.14e+6
+873.15	2.35e+6
+973.15	2.45e+6
+1073.15	2.58e+6
+1173.15	2.75e+6
+1273.15	2.88e+6
+1373.15	2.99e+6
+1473.15	3.16e+6
+1573.15	3.28e+6
+1633.15	3.35e+6
+1727.15	2.8e+6
+1773.15	2.9e+6
+1873.15	3e+6
+#end thc1
+#cv1
+298.15	4.8e+6
+373.15	5e+6
+473.15	5.3e+6
+573.15	5.4e+6
+673.15	5.6e+6
+773.15	5.7e+6
+873.15	5.95e+6
+973.15	6e+6
+1073.15	6.2e+6
+1173.15	6.3e+6
+1273.15	6.42e+6
+1373.15	6.56e+6
+1473.15	6.75e+6
+1573.15	6.95e+6
+1633.15	7.2e+6
+1727.15	8e+6
+1773.15	8e+6
+1873.15	8e+6
+#end cv1
 #end fluid1
 #end start tables
